@@ -1,0 +1,13 @@
+name = "FirmDynamics"
+uuid = "b2592c56-c85a-400f-b16a-4f17b892dd83"
+authors = ["Erik Loualiche"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
