@@ -153,23 +153,25 @@ end
 
 # --- correct employment field
 @transform!(df_CBP_tmp, :emp_corrected = :emp);
-@eachrow! df_CBP_tmp begin
-  if !ismissing(:empflag)
-      :emp_corrected = 
-        :empflag =="A" ? 10 :
-        :empflag =="B" ? 60 :
-        :empflag =="C" ? 175 :
-        :empflag =="E" ? 375 :
-        :empflag =="F" ? 750 :
-        :empflag =="G" ? 1750 :
-        :empflag =="H" ? 3750 :
-        :empflag =="I" ? 7500 :
-        :empflag =="J" ? 17500 :
-        :empflag =="K" ? 37500 :
-        :empflag =="L" ? 75000 :
-        :empflag =="M" ? 100000 :
-        0;
-  end
+if ("emp_flag" in names(df_CBP))
+  @eachrow! df_CBP_tmp begin
+    if !ismissing(:empflag)
+        :emp_corrected = 
+          :empflag =="A" ? 10 :
+          :empflag =="B" ? 60 :
+          :empflag =="C" ? 175 :
+          :empflag =="E" ? 375 :
+          :empflag =="F" ? 750 :
+         :empflag =="G" ? 1750 :
+          :empflag =="H" ? 3750 :
+         :empflag =="I" ? 7500 :
+         :empflag =="J" ? 17500 :
+         :empflag =="K" ? 37500 :
+         :empflag =="L" ? 75000 :
+         :empflag =="M" ? 100000 :
+          0;
+    end
+  end;
 end;
 
 # Aggregate and clean up
