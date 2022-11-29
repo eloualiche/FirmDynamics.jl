@@ -3,6 +3,15 @@ uuid = "b2592c56-c85a-400f-b16a-4f17b892dd83"
 authors = ["Erik Loualiche"]
 version = "0.1.0"
 
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+Missings = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
+ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
+
 [compat]
 julia = "1"
 
