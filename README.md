@@ -2,6 +2,16 @@
 
 [![Build Status](https://github.com/eloualiche/FirmDynamics.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/eloualiche/FirmDynamics.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
+
+## Installation
+
+Package is not registered. To add directly from github:
+
+```julia
+import Pkg
+Pkg.add(url="https://github.com/eloualiche/FirmDynamics.jl")
+```
+
 ## County Business Pattern
 
 See `ImportCBP.jl` which export two functions. 
