@@ -192,7 +192,7 @@ end
 
 Download the CBP data and collect employment by regions and industries for a given level.
 """
-function build_emp_CBP(year_list::Union{Array{Int64}, UnitRange{Int64}};
+function build_emp_CBP(year_list::Union{Array{Int64}, UnitRange{Int64}, Int64};
   aggregation=:county,
   industry=:naics, 
   level = 4)
