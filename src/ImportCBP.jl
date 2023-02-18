@@ -325,10 +325,38 @@ function build_CBP_agg(year_list::Union{Array{Int64}, UnitRange{Int64}, Int64};
   level = 4,
   verbose=false)
 
-  df_CBP = build_CBP(year_list, aggregation=aggregation, industry=industry);
-  df_CBP = build_CBP_agg(df_CBP, aggregation=aggregation, industry=industry, level=level, verbose);
+  if industry == :sic
+    df_CBP = build_CBP(year_list, aggregation=aggregation, industry=industry);
+    df_CBP_agg = build_CBP_agg(df_CBP, aggregation=aggregation, industry=industry, level=level, verbose);
+  elseif industry == :naics
+    df_CBP = build_CBP(year_list, aggregation=aggregation, industry=industry);
+    df_CBP_agg = DataFrame()
+    for year_iter in year_list
+      df_CBP_tmp = build_CBP_agg(@rsubset(df_CBP_tmp, :date_y == year_iter), 
+        aggregation=aggregation, industry=industry, level=level, verbose);
+      df_CBP_agg = vcat(df_CBP_agg, df_CBP_tmp, cols=:union)
+    end
+  end
 
-  return df_CBP
+  return df_CBP_agg
 
 end
 # ---------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
