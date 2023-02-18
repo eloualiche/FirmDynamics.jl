@@ -227,6 +227,8 @@ function build_CBP_agg(df_CBP::DataFrame;
   verbose=false)
 
 
+# df_CBP=CSV.read("/Users/loulou/Dropbox/projects_other/munis_home/estimate_MuniSensitivity/tmp/cbp_sic_tmp.csv", DataFrame)
+
 # --- select data based on industry
   if industry == :naics
     df_CBP_tmp = @subset(df_CBP, :year .>= 1998)
@@ -266,18 +268,18 @@ end;
   end
   df_CBP_agg = select(df_CBP_tmp, :year, industry, :fipstate, :fipscty, 
     r"ap", :empflag, :emp, :emp_corrected)  
-  @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-)" => ""))
+  @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-|\\)" => ""))
   @rtransform!(df_CBP_agg, :industry_len   = length($industry))
   @subset!(df_CBP_agg, :industry_len .== level)
   @subset!(df_CBP_agg, ismissing.(:empflag))
   if verbose
-    @info "Aggregation of payroll and enmployment at industry/date/regional level ..."
+    @info "Aggregation of payroll and employment at industry/date/regional level ..."
   end  
   df_CBP_agg = @combine(groupby(df_CBP_agg, [:year, :fipstate, :fipscty, industry]),
     :payroll_by_fips = sum(:ap), # in 1000s of dollars
     :emp_by_fips = sum(:emp_corrected) );
   @rtransform!(df_CBP_agg, :wage = :payroll_by_fips / :emp_by_fips);
-  sort!(df_CBP_agg, [:fipstate, :fipscty])
+  sort!(df_CBP_agg, [:fipstate, :fipscty, :year])
   rename!(df_CBP_agg, :year => :date_y, industry => Symbol(string(industry)*"_"*string(level)) )
 
   return df_CBP_agg
