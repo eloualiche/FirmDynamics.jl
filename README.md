@@ -26,11 +26,11 @@ df_CBP_naics = FirmDynamics.build_CBP(2018:2020,
 A function aggregates directly the CBP into employment by cells (geographical unit x industry unit).
 
 ```julia
-df_CBP_emp_naics4 = FirmDynamics.build_emp_CBP(2018:2020, 
+df_CBP_emp_naics4 = FirmDynamics.build_CBP_emp(2018:2020, 
   aggregation=:county, industry=:naics, level=4);
 
 # similar result can be achieved using data downloaded above
-df_CBP_emp_naics4 = FirmDynamics.build_emp_CBP(df_CBP_naics, 
+df_CBP_emp_naics4 = FirmDynamics.build_CBP_emp(df_CBP_naics, 
   aggregation=:county, industry=:naics, level=4)
 ```
 
