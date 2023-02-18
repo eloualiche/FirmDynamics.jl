@@ -299,7 +299,6 @@ end;
   if verbose
     @info "Aggregation of payroll and employment at industry/date/regional level ..."
   end  
-  @subset!(df_CBP_agg, ismissing.(:empflag))
   df_CBP_agg = @combine(groupby(df_CBP_agg, [:year, :fipstate, :fipscty, industry]),
     :payroll_by_fips = sum(:ap), # in 1000s of dollars
     :emp_by_fips = sum(:emp_corrected) );
