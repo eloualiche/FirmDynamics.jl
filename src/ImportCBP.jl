@@ -185,6 +185,22 @@ end;
   df_CBP_agg = @select(df_CBP_tmp, :year, $industry, :fipstate, :fipscty, :emp_corrected)
   @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-|\\)" => ""))
   @rtransform!(df_CBP_agg, :industry_len   = length($industry))
+  
+  if (industry==:sic) & (level==3)
+    @rsubset!(df_CBP_agg, :industry_len>=3)
+    @rsubset!(df_CBP_agg, :industry_len==3 || ( (:industry_len==4) & (:sic[4] == '0')) )
+    @rtransform!(df_CBP_agg, :sic_3 = :sic[1:3])        
+    sort!(df_CBP_agg, [:year, :sic, :fipstate, :fipscty])
+    @transform!(groupby(df_CBP_agg, [:year, :sic_3, :fipstate, :fipscty]), :seq_obs=1:size(:sic, 1))
+    @rsubset!(df_CBP_agg, :seq_obs == 1)
+    df_CBP_agg
+    @pipe @rsubset(df_CBP_agg, ifelse(:industry_len<4, true, false) )
+    @pipe @rsubset(df_CBP_agg, ifelse(:industry_len==4, true, false) ) |> @rsubset(_, :sic[3].=='9') |> 
+      @select(_, :sic) |> unique
+    select!(df_CBP_agg, Not([:industry_len, :seq_obs, :sic]))
+    rename!(df_CBP_agg, :sic_3 => :sic)
+  end
+
   @subset!(df_CBP_agg, :industry_len .== level)
   if verbose
     @info "Aggregation of employment at industry/date/regional level ..."
