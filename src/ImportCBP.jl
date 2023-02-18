@@ -279,7 +279,7 @@ end;
   if verbose
     @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
   end
-  df_CBP_agg = @select(df_CBP_tmp, :year, $industry, :fipstate, :fipscty, :emp_corrected)
+  df_CBP_agg = @select(df_CBP_tmp, :year, $industry, :fipstate, :fipscty, :emp_corrected, :ap)
   @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-|\\)" => ""))
   @rtransform!(df_CBP_agg, :industry_len   = length($industry))
   
@@ -304,7 +304,10 @@ end;
     :emp_by_fips = sum(:emp_corrected) );
   @rtransform!(df_CBP_agg, :wage = :payroll_by_fips / :emp_by_fips);
   sort!(df_CBP_agg, [:fipstate, :fipscty, :year])
+  @transform!(df_CBP_agg, :wage = replace(:wage, NaN=>missing) )
   rename!(df_CBP_agg, :year => :date_y, industry => Symbol(string(industry)*"_"*string(level)) )
+  # Compress
+  @subset!(df_CBP_agg, :emp_by_fips .> 0 )
 
   return df_CBP_agg
 
