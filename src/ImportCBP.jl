@@ -193,15 +193,12 @@ end;
     sort!(df_CBP_agg, [:year, :sic, :fipstate, :fipscty])
     @transform!(groupby(df_CBP_agg, [:year, :sic_3, :fipstate, :fipscty]), :seq_obs=1:size(:sic, 1))
     @rsubset!(df_CBP_agg, :seq_obs == 1)
-    df_CBP_agg
-    @pipe @rsubset(df_CBP_agg, ifelse(:industry_len<4, true, false) )
-    @pipe @rsubset(df_CBP_agg, ifelse(:industry_len==4, true, false) ) |> @rsubset(_, :sic[3].=='9') |> 
-      @select(_, :sic) |> unique
     select!(df_CBP_agg, Not([:industry_len, :seq_obs, :sic]))
     rename!(df_CBP_agg, :sic_3 => :sic)
+  else
+    @subset!(df_CBP_agg, :industry_len .== level)
   end
 
-  @subset!(df_CBP_agg, :industry_len .== level)
   if verbose
     @info "Aggregation of employment at industry/date/regional level ..."
   end  
