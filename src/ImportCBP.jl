@@ -219,62 +219,6 @@ end
 
 
 # ---------------------------------------------------------
-function build_CBP_pay(df_CBP::DataFrame;
-  aggregation=:county,
-  industry=:naics, 
-  level = 4,
-  verbose=false)
-
-
-# --- select data based on industry
-if industry == :naics
-  df_CBP_tmp = @subset(df_CBP, :year .>= 1998)
-elseif industry == :sic
-  df_CBP_tmp = @subset(df_CBP, :year .<= 1997)
-end
-
-# Aggregate and clean up
-  if verbose
-    @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
-  end
-  df_CBP_agg = select(df_CBP_tmp, :year, industry, :fipstate, :fipscty, r"ap", :empflag, :emp)  
-  @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-)" => ""))
-  @rtransform!(df_CBP_agg, :industry_len   = length($industry))
-  @subset!(df_CBP_agg, :industry_len .== level)
-  @subset!(df_CBP_agg, ismissing.(:empflag))
-  if verbose
-    @info "Aggregation of payroll at industry/date/regional level ..."
-  end  
-  df_CBP_agg = @combine(groupby(df_CBP_agg, [:year, :fipstate, :fipscty, industry]),
-    :ap = sum(:ap), :wage = sum(:ap)/sum(:emp) ); # in 1000s of dollars
-  sort!(df_CBP_agg, [:fipstate, :fipscty])
-  rename!(df_CBP_agg, :year => :date_y, industry => Symbol(string(industry)*"_"*string(level)) )
-
-  return df_CBP_agg
-
-end
-
-"""
-    build_pay_CBP(year_list::Union{Array{Int64}, UnitRange{Int64}}; aggregation=:county, industry=:naics, level = 4)
-
-Download the CBP data and collect payroll by regions and industries for a given level.
-"""
-function build_CBP_pay(year_list::Union{Array{Int64}, UnitRange{Int64}, Int64};
-  aggregation=:county,
-  industry=:naics, 
-  level = 4,
-  verbose=false)
-
-  df_CBP = build_CBP(year_list, aggregation=aggregation, industry=industry);
-  df_CBP = build_CBP_pay(df_CBP, aggregation=aggregation, industry=industry, level=level, verbose);
-
-  return df_CBP
-
-end
-# ---------------------------------------------------------
-
-
-# ---------------------------------------------------------
 # Only one function to aggregate both
 function build_CBP_agg(df_CBP::DataFrame;
   aggregation=:county,
@@ -330,8 +274,9 @@ end;
     @info "Aggregation of payroll and enmployment at industry/date/regional level ..."
   end  
   df_CBP_agg = @combine(groupby(df_CBP_agg, [:year, :fipstate, :fipscty, industry]),
-    :ap = sum(:ap), :wage = sum(:ap)/sum(:emp), # in 1000s of dollars
+    :payroll_by_fips = sum(:ap), # in 1000s of dollars
     :emp_by_fips = sum(:emp_corrected) );
+  @rtransform!(df_CBP_agg, :wage = :payroll_by_fips / :emp_by_fips);
   sort!(df_CBP_agg, [:fipstate, :fipscty])
   rename!(df_CBP_agg, :year => :date_y, industry => Symbol(string(industry)*"_"*string(level)) )
 
