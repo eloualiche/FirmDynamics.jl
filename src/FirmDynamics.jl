@@ -7,10 +7,13 @@ import Downloads
 import ZipFile
 import CSV
 import DataFrames: DataFrame, ByRow, groupby, nrow, passmissing, Not,
-  rename!, select!, groupby  
+  rename!, select, select!, groupby , innerjoin
 import DataFramesMeta: DataFramesMeta, 
-  @passmissing, @subset!, @subset, @rsubset!, @transform!, @rtransform!, 
-  @eachrow!, @select, @select!, @combine, leftjoin
+  @passmissing, 
+  @subset!, @subset, @rsubset!, 
+  @transform, @transform!, @rtransform, @rtransform!, 
+  @select, @select!, 
+  @combine, leftjoin, @eachrow!
 import Dates: Dates, Date
 import Missings: Missings, missing
 # import MonthlyDates: MonthlyDate
@@ -28,8 +31,8 @@ include("ImportCES.jl")
 # ---------------------------------------------------------
 # List of exported functions
 # export greet_FinanceRoutines    # for debugging with sandbox.jl
-export build_CBP, build_emp_CBP # 
-export build_CES
+export build_CBP, build_CBP_emp, build_CBP_pay # 
+export build_CES, build_CES_sic
 # ---------------------------------------------------------
 
 

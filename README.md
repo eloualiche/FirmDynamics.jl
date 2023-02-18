@@ -35,3 +35,19 @@ df_CBP_emp_naics4 = FirmDynamics.build_emp_CBP(df_CBP_naics,
 ```
 
 ## Current Employment Statistics
+
+See the flat files 
+  - Current files (naics aggregation) [here](https://download.bls.gov/pub/time.series/ce.txt)
+  - Legacy files (sic aggregation) [here](https://download.bls.gov/pub/time.series/ee/ee.txt)
+
+
+Read and select the relevant series in one movement:
+
+```julia
+df_CES_earnings = FirmDynamics.build_CES(
+  industry=:naics, frequency=:monthly,
+  seasonal_adjustment=true, 
+  series_code=[1, 11, 15, 30, 33], 
+  level = 4)
+```
+
