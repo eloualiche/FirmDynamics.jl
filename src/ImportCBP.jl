@@ -180,7 +180,7 @@ end;
 
 # Aggregate and clean up
   if verbose
-    @info "Cleaning up industry to the correct level ... " * level * " ..."
+    @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
   end
   df_CBP_agg = @select(df_CBP_tmp, :year, $industry, :fipstate, :fipscty, :emp_corrected)
   @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-|\\)" => ""))
@@ -235,7 +235,7 @@ end
 
 # Aggregate and clean up
   if verbose
-    @info "Cleaning up industry to the correct level ... " * level * " ..."
+    @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
   end
   df_CBP_agg = select(df_CBP_tmp, :year, industry, :fipstate, :fipscty, r"ap", :empflag, :emp)  
   @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-)" => ""))
@@ -318,9 +318,10 @@ end;
 
 # Aggregate and clean up
   if verbose
-    @info "Cleaning up industry to the correct level ... " * level * " ..."
+    @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
   end
-  df_CBP_agg = select(df_CBP_tmp, :year, industry, :fipstate, :fipscty, r"ap", :empflag, :emp)  
+  df_CBP_agg = select(df_CBP_tmp, :year, industry, :fipstate, :fipscty, 
+    r"ap", :empflag, :emp, :emp_corrected)  
   @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-)" => ""))
   @rtransform!(df_CBP_agg, :industry_len   = length($industry))
   @subset!(df_CBP_agg, :industry_len .== level)
@@ -339,9 +340,10 @@ end;
 end
 
 """
-    build_pay_CBP(year_list::Union{Array{Int64}, UnitRange{Int64}}; aggregation=:county, industry=:naics, level = 4)
+    build_CBP_agg(year_list::Union{Array{Int64}, UnitRange{Int64}}; 
+    aggregation=:county, industry=:naics, level = 4, verbose = false)
 
-Download the CBP data and collect payroll by regions and industries for a given level.
+Download the CBP data and aggregate payments and payrolls by regions and industries for a given level.
 """
 function build_CBP_agg(year_list::Union{Array{Int64}, UnitRange{Int64}, Int64};
   aggregation=:county,
