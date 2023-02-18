@@ -25,12 +25,16 @@ function download_CBP(year_target::Int;
 
   if (aggregation == :county)
     suffix = "co"
+    group_var = [:fipstate, :fipscty]
   elseif (aggregation == :us)
     suffix = "us"
+    group_var = []
   elseif (aggregation == :state)
     suffix = "st"
-  elseif (aggregation == :msa)
+    group_var = [:fipstate]
+   elseif (aggregation == :msa)
     suffix = "msa"
+    group_var = [:msa]
     if year_target < 1993
       @warn "No MSA file before 1993"
       return DataFrame(A = Int64[], B = Int64[])
@@ -79,7 +83,7 @@ function download_CBP(year_target::Int;
   end
 
   col_order = intersect(
-    [:year, industry, :fipstate, :fipscty, :emp,  :empflag, :emp_nf],
+    [:year; industry; group_var; :emp; :empflag; :emp_nf],
     Symbol.(names(df_CBP))            )
   select!(df_CBP, col_order, Not(col_order))
   
@@ -139,99 +143,6 @@ end
 
 
 # ---------------------------------------------------------
-function build_CBP_emp(df_CBP::DataFrame;
-  aggregation=:county,
-  industry=:naics, 
-  level = 4,
-  verbose=false)
-
-# --- select data based on industry
-if industry == :naics
-  df_CBP_tmp = @subset(df_CBP, :year .>= 1998)
-elseif industry == :sic
-  df_CBP_tmp = @subset(df_CBP, :year .<= 1997)
-end
-
-# --- correct employment field
-if verbose
-  @info "Create corrected employment field ..."
-end
-@transform!(df_CBP_tmp, :emp_corrected = :emp);
-if ("emp_flag" in names(df_CBP))
-  @eachrow! df_CBP_tmp begin
-    if !ismissing(:empflag)
-        :emp_corrected = 
-         :empflag =="A" ? 10 :
-         :empflag =="B" ? 60 :
-         :empflag =="C" ? 175 :
-         :empflag =="E" ? 375 :
-         :empflag =="F" ? 750 :
-         :empflag =="G" ? 1750 :
-         :empflag =="H" ? 3750 :
-         :empflag =="I" ? 7500 :
-         :empflag =="J" ? 17500 :
-         :empflag =="K" ? 37500 :
-         :empflag =="L" ? 75000 :
-         :empflag =="M" ? 100000 :
-          0;
-    end
-  end;
-end;
-
-# Aggregate and clean up
-  if verbose
-    @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
-  end
-  df_CBP_agg = @select(df_CBP_tmp, :year, $industry, :fipstate, :fipscty, :emp_corrected)
-  @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-|\\)" => ""))
-  @rtransform!(df_CBP_agg, :industry_len   = length($industry))
-  
-  if (industry==:sic) & (level==3)
-    @rsubset!(df_CBP_agg, :industry_len>=3)
-    @rsubset!(df_CBP_agg, :industry_len==3 || ( (:industry_len==4) & (:sic[4] == '0')) )
-    @rtransform!(df_CBP_agg, :sic_3 = :sic[1:3])        
-    sort!(df_CBP_agg, [:year, :sic, :fipstate, :fipscty])
-    @transform!(groupby(df_CBP_agg, [:year, :sic_3, :fipstate, :fipscty]), :seq_obs=1:size(:sic, 1))
-    @rsubset!(df_CBP_agg, :seq_obs == 1)
-    select!(df_CBP_agg, Not([:industry_len, :seq_obs, :sic]))
-    rename!(df_CBP_agg, :sic_3 => :sic)
-  else
-    @subset!(df_CBP_agg, :industry_len .== level)
-  end
-
-  if verbose
-    @info "Aggregation of employment at industry/date/regional level ..."
-  end  
-  df_CBP_agg = @combine(groupby(df_CBP_agg, [:year, :fipstate, :fipscty, industry]),
-    :emp_by_fips = sum(:emp_corrected) );
-  sort!(df_CBP_agg, [:fipstate, :fipscty])
-  rename!(df_CBP_agg, :year => :date_y, industry => Symbol(string(industry)*"_"*string(level)) )
-
-  return df_CBP_agg
-
-end
-
-"""
-    build_CBP_emp(year_list::Union{Array{Int64}, UnitRange{Int64}}; aggregation=:county, industry=:naics, level = 4)
-
-Download the CBP data and collect employment by regions and industries for a given level.
-"""
-function build_CBP_emp(year_list::Union{Array{Int64}, UnitRange{Int64}, Int64};
-  aggregation=:county,
-  industry=:naics, 
-  level = 4,
-  verbose = false)
-
-  df_CBP = build_CBP(year_list, aggregation=aggregation, industry=industry);
-  df_CBP = build_CBP_emp(df_CBP, aggregation=aggregation, industry=industry, level=level, verbose);
-
-  return df_CBP
-
-end
-# ---------------------------------------------------------
-
-
-# ---------------------------------------------------------
 # Only one function to aggregate both
 function build_CBP_agg(df_CBP::DataFrame;
   aggregation=:county,
@@ -239,8 +150,15 @@ function build_CBP_agg(df_CBP::DataFrame;
   level = 4,
   verbose=false)
 
-
-# df_CBP=CSV.read("/Users/loulou/Dropbox/projects_other/munis_home/estimate_MuniSensitivity/tmp/cbp_sic_tmp.csv", DataFrame)
+  if (aggregation == :county)
+    group_var = [:fipstate, :fipscty]
+  elseif (aggregation == :us)
+    group_var = []
+  elseif (aggregation == :state)
+    group_var = [:fipstate]
+  elseif (aggregation == :msa)
+    group_var = [:msa]
+  end
 
 # --- select data based on industry
   if industry == :naics
@@ -279,7 +197,7 @@ end;
   if verbose
     @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
   end
-  df_CBP_agg = @select(df_CBP_tmp, :year, $industry, :fipstate, :fipscty, :emp_corrected, :ap)
+  df_CBP_agg = @select(df_CBP_tmp, :year, $industry, $group_var, :emp_corrected, :ap)
   @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-|\\)" => ""))
   @rtransform!(df_CBP_agg, :industry_len   = length($industry))
   
@@ -287,8 +205,8 @@ end;
     @rsubset!(df_CBP_agg, :industry_len>=3)
     @rsubset!(df_CBP_agg, :industry_len==3 || ( (:industry_len==4) & (:sic[4] == '0')) )
     @rtransform!(df_CBP_agg, :sic_3 = :sic[1:3])        
-    sort!(df_CBP_agg, [:year, :sic, :fipstate, :fipscty])
-    @transform!(groupby(df_CBP_agg, [:year, :sic_3, :fipstate, :fipscty]), :seq_obs=1:size(:sic, 1))
+    sort!(df_CBP_agg, [:year; :sic; group_var])
+    @transform!(groupby(df_CBP_agg, [:year; :sic_3; group_var]), :seq_obs=1:size(:sic, 1))
     @rsubset!(df_CBP_agg, :seq_obs == 1)
     select!(df_CBP_agg, Not([:industry_len, :seq_obs, :sic]))
     rename!(df_CBP_agg, :sic_3 => :sic)
@@ -299,11 +217,11 @@ end;
   if verbose
     @info "Aggregation of payroll and employment at industry/date/regional level ..."
   end  
-  df_CBP_agg = @combine(groupby(df_CBP_agg, [:year, :fipstate, :fipscty, industry]),
+  df_CBP_agg = @combine(groupby(df_CBP_agg, [:year; industry; group_var]),
     :payroll_by_fips = sum(:ap), # in 1000s of dollars
     :emp_by_fips = sum(:emp_corrected) );
   @rtransform!(df_CBP_agg, :wage = :payroll_by_fips / :emp_by_fips);
-  sort!(df_CBP_agg, [:fipstate, :fipscty, :year])
+  sort!(df_CBP_agg, [group_var; :year])
   @transform!(df_CBP_agg, :wage = replace(:wage, NaN=>missing) )
   rename!(df_CBP_agg, :year => :date_y, industry => Symbol(string(industry)*"_"*string(level)) )
   # Compress
