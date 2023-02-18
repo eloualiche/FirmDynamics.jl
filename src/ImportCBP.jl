@@ -332,7 +332,8 @@ function build_CBP_agg(year_list::Union{Array{Int64}, UnitRange{Int64}, Int64};
     df_CBP = build_CBP(year_list, aggregation=aggregation, industry=industry);
     df_CBP_agg = DataFrame()
     for year_iter in year_list
-      df_CBP_tmp = build_CBP_agg(@subset(df_CBP_tmp, :date_y .== year_iter), 
+      df_CBP_tmp = build_CBP_agg(
+        @subset(df_CBP, :date_y .== year_iter), 
         aggregation=aggregation, industry=industry, level=level, verbose);
       df_CBP_agg = vcat(df_CBP_agg, df_CBP_tmp, cols=:union)
     end
