@@ -279,15 +279,27 @@ end;
   if verbose
     @info "Cleaning up industry to the correct level ... " * string(level) * " ..."
   end
-  df_CBP_agg = select(df_CBP_tmp, :year, industry, :fipstate, :fipscty, 
-    r"ap", :empflag, :emp, :emp_corrected)  
+  df_CBP_agg = @select(df_CBP_tmp, :year, $industry, :fipstate, :fipscty, :emp_corrected)
   @rtransform!(df_CBP_agg, $industry = replace($industry,  r"(/|-|\\)" => ""))
   @rtransform!(df_CBP_agg, :industry_len   = length($industry))
-  @subset!(df_CBP_agg, :industry_len .== level)
-  @subset!(df_CBP_agg, ismissing.(:empflag))
+  
+  if (industry==:sic) & (level==3)
+    @rsubset!(df_CBP_agg, :industry_len>=3)
+    @rsubset!(df_CBP_agg, :industry_len==3 || ( (:industry_len==4) & (:sic[4] == '0')) )
+    @rtransform!(df_CBP_agg, :sic_3 = :sic[1:3])        
+    sort!(df_CBP_agg, [:year, :sic, :fipstate, :fipscty])
+    @transform!(groupby(df_CBP_agg, [:year, :sic_3, :fipstate, :fipscty]), :seq_obs=1:size(:sic, 1))
+    @rsubset!(df_CBP_agg, :seq_obs == 1)
+    select!(df_CBP_agg, Not([:industry_len, :seq_obs, :sic]))
+    rename!(df_CBP_agg, :sic_3 => :sic)
+  else
+    @subset!(df_CBP_agg, :industry_len .== level)
+  end
+
   if verbose
     @info "Aggregation of payroll and employment at industry/date/regional level ..."
   end  
+  @subset!(df_CBP_agg, ismissing.(:empflag))
   df_CBP_agg = @combine(groupby(df_CBP_agg, [:year, :fipstate, :fipscty, industry]),
     :payroll_by_fips = sum(:ap), # in 1000s of dollars
     :emp_by_fips = sum(:emp_corrected) );
