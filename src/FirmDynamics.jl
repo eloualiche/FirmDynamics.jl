@@ -7,7 +7,7 @@ import Downloads
 import ZipFile
 import CSV
 import DataFrames: DataFrame, ByRow, groupby, nrow, passmissing, Not,
-  rename!, select, select!, groupby , innerjoin
+  rename!, select, select!, groupby , innerjoin, stack
 import DataFramesMeta: DataFramesMeta, 
   @passmissing, 
   @subset!, @subset, @rsubset!, 
