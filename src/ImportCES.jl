@@ -96,10 +96,10 @@ function build_CES(df_CES;
   end
 
   @rsubset!(df_CES, :data_type_code in series_code)
-
-  select!(df_CES, r"date", :naics_code, :value, 
+  select!(df_CES, r"date", 
+      :naics_code => ByRow((x->string.(x))) => Symbol(string(industry)*"_"*string(level)) ,
+      :value, 
       :industry_code, :industry_name, :data_type_text, :series_id)
-  rename!(df_CES, :naics_code => Symbol(string(industry)*"_"*string(level)) )
 
   return(df_CES)
 
